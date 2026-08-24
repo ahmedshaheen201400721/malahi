@@ -1,0 +1,88 @@
+# Translation file - Auto-generated
+# Language: ar
+#
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+msgid "Malahi Provider"
+msgstr "مزوّد ملاهي"
+
+msgid "Malahi Providers"
+msgstr "مزوّدو ملاهي"
+
+msgid "Malahi Coupon"
+msgstr "كوبون ملاهي"
+
+msgid "Malahi Coupons"
+msgstr "كوبونات ملاهي"
+
+msgid ""
+"Malahi catalog synced: %(pc)d products created, %(pu)d updated, %(cc)d "
+"coupons created, %(cu)d updated."
+msgstr ""
+"تمت مزامنة كتالوج ملاهي: %(pc)d منتج جديد، %(pu)d تم تحديثه، %(cc)d كوبون "
+"جديد، %(cu)d تم تحديثه."
+
+msgid "Sync Malahi Coupons"
+msgstr "مزامنة كوبونات ملاهي"
+
+msgid "Sync Malahi Products"
+msgstr "مزامنة منتجات ملاهي"
+
+msgid "ID"
+msgstr "المعرف"
+
+msgid "Code"
+msgstr "الكود"
+
+msgid "Percentage"
+msgstr "النسبة المئوية"
+
+msgid "Last Synced"
+msgstr "آخر مزامنة"
+
+msgctxt "ui/views/coupon_views.py"
+msgid "Sync Malahi Coupons"
+msgstr "مزامنة كوبونات ملاهي"
+
+msgctxt "ui/views/coupon_views.py"
+msgid "ID"
+msgstr "المعرف"
+
+msgctxt "ui/views/coupon_views.py"
+msgid "Code"
+msgstr "الكود"
+
+msgctxt "ui/views/coupon_views.py"
+msgid "Percentage"
+msgstr "النسبة المئوية"
+
+msgctxt "ui/views/coupon_views.py"
+msgid "Last Synced"
+msgstr "آخر مزامنة"
+
+msgctxt "ui/menu_items/menu_items.py"
+msgid "Malahi Coupons"
+msgstr "كوبونات ملاهي"
+
+msgctxt "ui/menu_items/menu_items.py"
+msgid "Sync Malahi Products"
+msgstr "مزامنة منتجات ملاهي"
+
+msgid "Malahi"
+msgstr "ملاهي"
+
+msgid "Number of Invitations"
+msgstr "عدد الدعوات"
+
+msgctxt "ui/views/batch.py"
+msgid "Malahi"
+msgstr "ملاهي"
+
+msgctxt "ui/views/batch.py"
+msgid "Number of Invitations"
+msgstr "عدد الدعوات"
