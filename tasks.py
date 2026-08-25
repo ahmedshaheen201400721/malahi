@@ -18,7 +18,7 @@ NIGHTLY_TASK_NAME = 'malahi-nightly-catalog-sync'
 @shared_task(bind=True, max_retries=3, default_retry_delay=600)
 def sync_malahi_catalog_task(self):
     """Nightly fetch of the Malahi catalog into products/providers/coupons."""
-    from modules.malahi_extension.services import sync_malahi_catalog
+    from malahi_extension.services import sync_malahi_catalog
     try:
         counts = sync_malahi_catalog()
         logger.info("Nightly Malahi catalog sync: %s", counts)
@@ -41,7 +41,7 @@ def register_nightly_sync():
     task, created = PeriodicTask.objects.update_or_create(
         name=NIGHTLY_TASK_NAME,
         defaults={
-            'task': 'modules.malahi_extension.tasks.sync_malahi_catalog_task',
+            'task': 'malahi_extension.tasks.sync_malahi_catalog_task',
             'crontab': schedule,
             'interval': None,
             'enabled': True,

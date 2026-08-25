@@ -54,7 +54,7 @@ def sync_malahi_catalog():
     """
     from modules.base.middleware import get_current_company
     from modules.base.models import Company
-    from modules.malahi_extension.models import MalahiCoupon, MalahiProvider
+    from malahi_extension.models import MalahiCoupon, MalahiProvider
     from modules.products.models import ProductCategory, ProductTemplate
 
     providers, coupons, generated_at = fetch_malahi_catalog()

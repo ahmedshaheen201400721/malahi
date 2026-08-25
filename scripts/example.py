@@ -10,7 +10,7 @@
 print("Running example script for malahi_extension module...")
 
 # Example: Create initial data
-# from modules.malahi_extension.models import YourModel
+# from malahi_extension.models import YourModel
 # from modules.base.models import User
 
 # user = User.objects.first()

@@ -29,5 +29,5 @@ class ProductTemplateMalahiExtension(ModelExtension):
     @action
     def action_sync_malahi_catalog(queryset):
         """Fetch the Malahi catalog and upsert providers, products and coupons."""
-        from modules.malahi_extension.services import sync_malahi_catalog, format_sync_result
+        from malahi_extension.services import sync_malahi_catalog, format_sync_result
         return format_sync_result(sync_malahi_catalog())
