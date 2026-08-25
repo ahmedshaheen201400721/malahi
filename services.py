@@ -39,7 +39,11 @@ def fetch_malahi_catalog():
             data = payload.get('data', payload)
             if 'providers' not in data:
                 raise ValueError(f"Unexpected catalog payload from {url}")
-            return data.get('providers') or [], data.get('coupons') or [], data.get('generated_at')
+            # 'coupons' is passed through as-is rather than coerced to []:
+            # None means the payload carried no coupons key at all, which the
+            # prune step in sync_malahi_catalog() must not read as "every
+            # coupon was withdrawn". An explicit [] genuinely means none.
+            return data.get('providers') or [], data.get('coupons'), data.get('generated_at')
         except Exception as exc:
             last_error = exc
             logger.warning("Malahi catalog fetch failed from %s: %s", url, exc)
@@ -65,7 +69,7 @@ def sync_malahi_catalog():
 
     counts = {
         'products_created': 0, 'products_updated': 0,
-        'coupons_created': 0, 'coupons_updated': 0,
+        'coupons_created': 0, 'coupons_updated': 0, 'coupons_deleted': 0,
         'providers': 0, 'generated_at': generated_at,
     }
 
@@ -117,10 +121,12 @@ def sync_malahi_catalog():
                 counts['products_created'] += 1
 
     now = timezone.now()
-    for item in coupons:
+    seen_codes = set()
+    for item in coupons or []:
         code = (item.get('coupon') or '').strip()
         if not code:
             continue
+        seen_codes.add(code)
         coupon_vals = {'percentage': _to_decimal(item.get('percentage')) or Decimal('0'), 'last_synced_at': now}
         coupon = MalahiCoupon.objects.filter(code=code).first()
         if coupon:
@@ -132,6 +138,24 @@ def sync_malahi_catalog():
             MalahiCoupon.create(code=code, **coupon_vals)
             counts['coupons_created'] += 1
 
+    # A coupon withdrawn upstream is deleted locally, so a code the Malahi
+    # platform no longer issues cannot keep being honoured here.
+    #
+    # Guarded on `is not None`, not on truthiness. fetch_malahi_catalog()
+    # validates only that 'providers' is present, so a truncated or reshaped
+    # response can reach this point with no coupons key at all — and treating
+    # that as "every coupon was withdrawn" would empty the table on a bad
+    # response rather than on a real change. An explicit empty list is a real
+    # answer and still prunes everything.
+    #
+    # Deleted one at a time rather than via queryset.delete() so BaseModel's
+    # pre_delete/post_delete hooks run; the coupon table is small enough that
+    # the extra queries do not matter.
+    if coupons is not None:
+        for coupon in MalahiCoupon.objects.exclude(code__in=seen_codes):
+            coupon.delete()
+            counts['coupons_deleted'] += 1
+
     logger.info("Malahi catalog sync done: %s", counts)
     return counts
 
@@ -140,10 +164,11 @@ def format_sync_result(counts):
     """Wrap sync counts into the standard @action response dict."""
     message = _(
         "Malahi catalog synced: %(pc)d products created, %(pu)d updated, "
-        "%(cc)d coupons created, %(cu)d updated."
+        "%(cc)d coupons created, %(cu)d updated, %(cd)d removed."
     ) % {
         'pc': counts['products_created'], 'pu': counts['products_updated'],
         'cc': counts['coupons_created'], 'cu': counts['coupons_updated'],
+        'cd': counts.get('coupons_deleted', 0),
     }
     return {
         'status': True,
