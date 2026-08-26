@@ -86,3 +86,25 @@ msgstr "ملاهي"
 msgctxt "ui/views/batch.py"
 msgid "Number of Invitations"
 msgstr "عدد الدعوات"
+
+# Product form patches (ui/views/product_template_patches.py)
+msgid "Price Before Discount"
+msgstr "السعر قبل الخصم"
+
+msgid "Malahi Catalog"
+msgstr "كتالوج ملاهي"
+
+msgid "Malahi Product ID"
+msgstr "معرّف منتج ملاهي"
+
+msgid "Select provider..."
+msgstr "اختر المزوّد..."
+
+msgid "Malahi catalog price before the discount. Updated by the catalog sync."
+msgstr "سعر منتج ملاهي قبل الخصم. يتم تحديثه عند مزامنة الكتالوج."
+
+msgid "The Malahi provider this product was synced from"
+msgstr "مزوّد ملاهي الذي تمت مزامنة هذا المنتج منه"
+
+msgid "Product id on the Malahi catalog. The sync matches on this value."
+msgstr "معرّف المنتج في كتالوج ملاهي. تعتمد المزامنة على هذه القيمة للمطابقة."
