@@ -59,11 +59,11 @@ def sync_malahi_catalog():
     from modules.base.middleware import get_current_company
     from modules.base.models import Company
     from malahi_extension.models import MalahiCoupon, MalahiProvider
-    from modules.products.models import ProductCategory, ProductTemplate
+    from modules.products.models import ProductTemplate
 
     providers, coupons, generated_at = fetch_malahi_catalog()
 
-    # ProductCategory/ProductTemplate require a company; outside a request
+    # ProductTemplate requires a company; outside a request
     # (shell/Celery) there is no current company, so fall back to the first one.
     company_id = get_current_company() or Company.objects.values_list('id', flat=True).first()
 
@@ -89,12 +89,15 @@ def sync_malahi_catalog():
             provider = MalahiProvider.create(external_id=external_id, **provider_vals)
         counts['providers'] += 1
 
-        category = None
-        if provider.name:
-            category = ProductCategory.all_objects.filter(name=provider.name, company_id=company_id).first()
-            if not category:
-                category = ProductCategory.create(name=provider.name, company_id=company_id)
-
+        # No category is derived from the provider. This used to mint one
+        # ProductCategory per provider and assign it to every product, which put
+        # 52 shop names at the top of a tree meant for accounting/reporting
+        # categories — and duplicated, as a name-matched string, a fact already
+        # held properly by the malahi_provider FK below. Grouping by shop is done
+        # through that field, which the product form now shows.
+        #
+        # `categ` is left untouched on update, so a category a user has chosen
+        # for a product survives the sync instead of being overwritten nightly.
         for item in block.get('products') or []:
             product_id = item.get('product_id')
             if product_id is None:
@@ -106,7 +109,6 @@ def sync_malahi_catalog():
                 'cost': _to_decimal(item.get('cost')),
                 'malahi_price_before': _to_decimal(item.get('price_before')),
                 'malahi_provider': provider,
-                'categ': category,
                 'type': 'service',
                 'sale_ok': True,
             }
