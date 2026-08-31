@@ -158,8 +158,51 @@ def sync_malahi_catalog():
             coupon.delete()
             counts['coupons_deleted'] += 1
 
+    counts['rag_collections_queued'] = refresh_product_rag()
+
     logger.info("Malahi catalog sync done: %s", counts)
     return counts
+
+
+def refresh_product_rag():
+    """Queue a full re-index of every model-RAG collection over ProductTemplate.
+
+    aistudio keeps model collections fresh with per-record post_save/post_delete
+    signals, each firing its own Celery task. That works for ordinary edits but
+    not for a catalog sync: this function creates and deletes products in bulk,
+    so hundreds of tasks are queued at once and any that fail — a burst past the
+    role's connection limit is enough — leave the index silently partial, with
+    stale rows still pointing at deleted products.
+
+    A full collection sync is the repair: it re-reads every record and indexes
+    with cleanup="full", so it both adds what is missing and prunes what is gone.
+
+    Best-effort by design — the catalog is already committed by the time this
+    runs, so a RAG problem must never turn a successful sync into a failure.
+    Returns the collection ids queued (empty list if none, or on failure).
+    """
+    try:
+        from django.contrib.contenttypes.models import ContentType
+        from modules.aistudio.models import Collection
+        from modules.aistudio.tasks import sync_model_collection_task
+        from modules.products.models import ProductTemplate
+
+        content_type = ContentType.objects.get_for_model(ProductTemplate)
+        collection_ids = list(
+            Collection.objects.filter(
+                source_type='model',
+                model_content_type=content_type,
+                is_indexed=True,
+            ).values_list('id', flat=True)
+        )
+        for collection_id in collection_ids:
+            sync_model_collection_task.delay(collection_id)
+        if collection_ids:
+            logger.info("Queued product RAG re-index for collections %s", collection_ids)
+        return collection_ids
+    except Exception as exc:
+        logger.warning("Could not queue product RAG re-index: %s", exc)
+        return []
 
 
 def format_sync_result(counts):
@@ -172,6 +215,8 @@ def format_sync_result(counts):
         'cc': counts['coupons_created'], 'cu': counts['coupons_updated'],
         'cd': counts.get('coupons_deleted', 0),
     }
+    if counts.get('rag_collections_queued'):
+        message += " " + _("Search index refresh queued.")
     return {
         'status': True,
         'open_mode': 'message',
