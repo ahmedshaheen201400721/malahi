@@ -3,6 +3,16 @@
 from django.utils.translation import gettext as _
 
 menu_dict = {
+    # Sales > Products > Malahi Providers
+    "malahi_extension_sales_providers": {
+        "name": _("Malahi Providers"),
+        "icon": "Store",
+        "module": "malahi_extension",
+        "model": "malahi_extension.malahiprovider",
+        "sequence": 5,
+        "parent_key": "sales_main_menu_products",
+        "allowed_groups": ["sales.users"],
+    },
     # Sales > Products > Malahi Coupons
     "malahi_extension_sales_coupons": {
         "name": _("Malahi Coupons"),

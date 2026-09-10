@@ -9,6 +9,8 @@ from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 
+SAUDI_COUNTRY_NAME = "Saudi Arabia"
+
 CATALOG_URL = "https://backend.malahi.sa/client-api/v1/ai-catalog"
 CATALOG_FALLBACK_URL = "https://backend.malahi.sa/storage/ai_catalog.json"
 REQUEST_TIMEOUT = 20
@@ -50,6 +52,22 @@ def fetch_malahi_catalog():
     raise RuntimeError(f"Could not fetch the Malahi catalog: {last_error}")
 
 
+def _get_city(name):
+    """Get/create a base.City for a Malahi city name.
+
+    All Malahi venues are in Saudi Arabia. country is resolved by name rather
+    than a hardcoded id so this still works on a freshly seeded database, and is
+    left null if the country row is missing rather than failing the sync.
+    """
+    from modules.base.models import City, Country
+
+    city = City.objects.filter(name=name).first()
+    if city:
+        return city
+    country = Country.objects.filter(name=SAUDI_COUNTRY_NAME).first()
+    return City.objects.create(name=name, country=country)
+
+
 def sync_malahi_catalog():
     """Upsert MalahiProvider / ProductTemplate / MalahiCoupon rows from the API.
 
@@ -70,7 +88,7 @@ def sync_malahi_catalog():
     counts = {
         'products_created': 0, 'products_updated': 0,
         'coupons_created': 0, 'coupons_updated': 0, 'coupons_deleted': 0,
-        'providers': 0, 'generated_at': generated_at,
+        'providers': 0, 'cities': 0, 'generated_at': generated_at,
     }
 
     for block in providers:
@@ -88,6 +106,13 @@ def sync_malahi_catalog():
         else:
             provider = MalahiProvider.create(external_id=external_id, **provider_vals)
         counts['providers'] += 1
+
+        # Cities the venue operates in. `.set()` (not add) so a city dropped
+        # from the feed is dropped here too; get_or_create by name keeps ids
+        # stable across nightly runs so the agent's venue list doesn't churn.
+        city_names = [c.strip() for c in (block.get('cities') or []) if c and c.strip()]
+        provider.cities.set([_get_city(name) for name in city_names])
+        counts['cities'] += len(city_names)
 
         # No category is derived from the provider. This used to mint one
         # ProductCategory per provider and assign it to every product, which put
